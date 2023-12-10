@@ -7,6 +7,7 @@
 	import { languages } from '@codemirror/language-data';
 	import { indentWithTab } from '@codemirror/commands';
 	import { keymap } from '@codemirror/view';
+	import { EditorState } from '@codemirror/state';
 
 	let htmlPreview;
 	let markdownInput = '# Marked in the browser\n\nRendered by **marked**.';
@@ -17,17 +18,30 @@
 		// The Markdown parser will dynamically load parsers
 		// for code blocks, using @codemirror/language-data to
 		// look up the appropriate dynamic import.
-		let view = new EditorView({
-			doc: markdownInput,
-			extensions: [basicSetup, keymap.of([indentWithTab]), markdown({ codeLanguages: languages })],
+		new EditorView({
+			state: EditorState.create({
+				// Initial doc
+				doc: markdownInput,
+				// Says extensions, but these are facets according to the docs
+				extensions: [
+					// Adds some basic stuff like line numbers
+					basicSetup,
+					// Allows editor to intercept tabs as tabs in the editor instead of losing focus
+					keymap.of([indentWithTab]),
+					// Use the markdown plugin for highlighting
+					markdown({ codeLanguages: languages }),
+					// Register an event listener for content changes
+					EditorView.updateListener.of((update) => {
+						if (update.docChanged) {
+							htmlPreview = marked.parse(update.state.doc.toString());
+						}
+					})
+				]
+			}),
+			// Editor will be appended
 			parent: document.querySelector('.codemirror-container')
 		});
 	});
-
-	function handleTextInput(event) {
-		markdownInput = event.currentTarget.value;
-		htmlPreview = marked.parse(markdownInput);
-	}
 </script>
 
 <svelte:head>
@@ -36,17 +50,9 @@
 
 <main>
 	<div class="codemirror-container">
-		<h2 class="header">Input</h2>
-		<!-- CodeMirror markdown editor is injected here -->
+		<!-- CodeMirror markdown editor is injected here due to `parent` field above -->
 	</div>
 	<div>
-		<h2 class="header">Preview</h2>
 		{@html htmlPreview}
 	</div>
 </main>
-
-<style>
-	h2.header {
-		color: red;
-	}
-</style>
