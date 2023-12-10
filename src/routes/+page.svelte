@@ -37,7 +37,7 @@
 <main>
 	<div class="codemirror-container">
 		<h2 class="header">Input</h2>
-		<textarea cols="80" rows="15" on:input={handleTextInput}>{markdownInput}</textarea>
+		<!-- CodeMirror markdown editor is injected here -->
 	</div>
 	<div>
 		<h2 class="header">Preview</h2>
